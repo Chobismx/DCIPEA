@@ -1,0 +1,57 @@
+#Examen tercer parcial
+
+library(devtools)
+
+#Problema 1
+PreOp<-c(690,840,470,690,730,500,440)
+PostOp<-c(200,280,230,200,560,210,200)
+SGNdiff=PostOp-PreOp
+y=sign(SGNdiff)
+k=0
+binom.test(0,7,p=0.5,  alternative = c("less"),conf.level = 0.95)
+
+#Problema 2
+#friedman dos factores
+TF60wk0<-c(330,400,720,249,144,440,440,289,819,540)
+TF10wk0<-c(430,400,900,420,679,522,116,450,570,199)
+TF60wk10<-c(544,590,624,330,369,789,459,529,1099,930)
+TF10wk10<-c(476,320,650,330,486,369,110,474,700,259)
+wk0<-c(rep(0,10))
+wk10<-c(rep(10,10))
+week<-c(wk0,wk10,wk0,wk10)
+Percent60<-c(rep(60,20))
+Percent10<-c(rep(10,20))
+Percent<-c(Percent60,Percent10)
+datos<-c(TF60wk0,TF60wk10,TF10wk0,TF10wk10)
+
+Tabla=matrix(c(330,400,720,249,144,440,440,289,819,540,544,590,624,330,369,789,459,529,1099,930,430,400,900,420,679,522,116,450,570,199,476,320,650,330,486,369,110,474,700,259), ncol = 4)
+friedman.test(Tabla, data = Tabla)
+
+Rank1=rank(Tabla[,1])
+Rank2=rank(Tabla[,2])
+Rank3=rank(Tabla[,3])
+Rank4=rank(Tabla[,4])
+sum1=sum(Rank1)
+sum2=sum(Rank2)
+sum3=sum(Rank3)
+sum4=sum(Rank4)
+
+# Tabla$week=factor(Tabla$week, levels=unique(Tabla$week))
+# Tabla$Percent=factor(Tabla$Percent, levels=unique(Tabla$Percent))
+# 
+# friedman.test(Tabla$datos,Tabla$week,Tabla$Percent, data = Tabla)
+
+#Problema 3
+devtools::install_github("kassambara/ggpubr")
+IL6<-c(122,203,458,78,239,165,467,421,421,227,265,97,215,415,66,58,213)
+CRP<-c(32,39,63,7,62,22,53,29,44,24,31,12,50,41,12,14,9)
+cor(IL6,CRP,method = c("spearman"))
+cor.test(IL6,CRP,method = c("spearman"), conf.level = 0.95, exact = FALSE)
+
+#Problema 4
+
+#Loading Data
+Tabladatos=matrix(c(102,111,73,59,125,80),ncol=3)
+colnames(Tabladatos)=c("Morning","Nocturnal","Joint")
+row.names(Tabladatos)=c("Women","Men")
+chisq.test(Tabladatos)
