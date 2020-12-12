@@ -1,0 +1,133 @@
+import cv2 as cv
+import matplotlib.pyplot as plt
+import numpy as np
+# -*- coding: utf-8 -*-
+#Un tuple es (0,0,0)
+#Funcion distancia
+def distancia(p1, p2):
+    x1, y1 = p1
+    x2, y2 = p2
+    dx = x2 - x1
+    dy = y2 - y1
+    return (dx ** 2 + dy ** 2) ** 0.5
+#Funcion para buscar puntos extremos del pie sobre una linea horizontal dada
+# buscapuntos(linea horizontal, matriz donde se busca, numero a buscar)
+#entrega el punto mas a la izquierda como minimo y extremo derecha como max
+def buscapuntos(linea, matriz, numero):
+    np_array = matriz[0:len(matriz)][linea]
+    result = np.where(np_array == numero)
+    puntomax = np.amax(result)
+    puntomin = np.amin(result)
+    return (puntomin,puntomax)
+
+
+#leer la imagen
+imagen = cv.imread('Pie Abby21.jpg')
+#Preprocesos
+#Para facilitar el procesamiento, se hace un cambio de tamaño
+scale_percent = 25
+#Dimensiones a un cuarto
+width = int(imagen.shape[1] * scale_percent / 100)
+height = int(imagen.shape[0] * scale_percent / 100)
+tamano = (width, height)
+chica = cv.resize(imagen, tamano)
+
+#Convertirla a gris
+th3 = cv.cvtColor(chica, cv.COLOR_BGR2GRAY)
+#Filtro Gaussiano
+th3 = cv.GaussianBlur(th3,(5,5),0)
+#cambiar a binaria, metodo Otsus
+ret3,th3 = cv.threshold(th3,0,255,cv.THRESH_BINARY+cv.THRESH_OTSU)
+th3 = cv.threshold(th3, 45, 255, cv.THRESH_BINARY)[1]
+th3 = cv.erode(th3, None, iterations=2)
+th3 = cv.dilate(th3, None, iterations=2)
+th3 = cv.bitwise_not(th3)
+
+
+# Encontrar contornos y seleccionar el mas grande como padre
+cnts = cv.findContours(th3, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
+cnts = cnts[0] if len(cnts) == 2 else cnts[1]
+c = max(cnts, key=cv.contourArea)
+
+# Obtener puntos extremos
+puntoA = tuple(c[c[:, :, 0].argmin()][0])
+puntoE = tuple(c[c[:, :, 0].argmax()][0])
+puntoB = tuple(c[c[:, :, 1].argmin()][0])
+puntoBp = tuple(c[c[:, :, 1].argmax()][0])
+
+#Haciendo los trazos
+#trazar una linea vertical que pasa por A
+p001 = (puntoA[0],puntoB[1])
+p002 = (puntoA[0],puntoBp[1])
+cv.line(chica,tuple(p001),tuple(p002),(0, 0, 0), 1)
+#trazar una linea horizontal que pase por B
+p123 = (puntoA[0],puntoB[1])
+p124 = (puntoE[0],puntoB[1])
+cv.line(chica,tuple(p123),tuple(p124),(0, 0, 0), 1)
+#trazar una linea horizontal que pase por B prima
+p126 = (puntoA[0],puntoBp[1])
+p127 = (puntoE[0],puntoBp[1])
+cv.line(chica,tuple(p126),tuple(p127),(0, 0, 0), 1)
+#trazar una linea horizontal que pase por A llamada L3
+p125 = (puntoE[0],puntoA[1])
+cv.line(chica,tuple(puntoA),tuple(p125),(0, 0, 0), 1)
+#obtener la distancia media fundamental (mf) que es de A a B.
+mf = int(puntoA[1] - puntoB[1])
+#El punto C se encuentra a una distancia vertical con valor de mf del punto A
+puntoC = ([puntoA[0],puntoA[1] + mf])
+#trazar una linea horizontal llamada L4 desde el punto C
+p128 = (puntoE[0],puntoC[1])
+cv.line(chica,tuple(puntoC),tuple(p128),(0, 0, 0), 1)
+#El punto D se encuentra a una distancia vertical con valor de mf del punto C
+puntoD = ([puntoA[0],puntoC[1] + mf])
+#trazar una linea horizontal llamada L5 desde el punto D
+p129 = (puntoE[0],puntoD[1])
+cv.line(chica,tuple(puntoD),tuple(p129),(0, 0, 0), 1)
+#Hacer una funcion para buscar puntos en una linea horizontal o vertical
+resultados = buscapuntos(puntoC[1], th3,255)
+#filaP = puntoC[1]
+#np_array = th3[0:len(th3)][filaP]
+#result = np.where(np_array == 255)
+#puntomax = np.amax(result)
+#puntomin = np.amin(result)
+#Encontrar el punto F y G, sobre la linea L4
+puntoF = (resultados[0],puntoC[1])
+puntoG = (resultados[1], puntoC[1])
+#Obtener medidas de X y Y
+medidaX = float(puntoA[0] - puntoE[0])
+medidaY = float(puntoF[0] - puntoG[0])
+#Calcular indice Hernandez Corvo
+#Se determina la cantidad de decimales para restar
+#nda = len(str(medidaX)[str(medidaX).find("."):])-1
+#ndb = len(str(medidaY)[str(medidaY).find("."):])-1
+# se determina la maxima presicion requerida
+#ndm = max(nda, ndb)
+#se crea al codificador de resolución
+#mcf = "%." + str(ndm) +"f"
+HC0 = ((medidaX - medidaY) / medidaX) * 100
+
+print(HC0)
+
+
+
+
+
+
+
+#Syntaxis de circulos cv.circle(image, center_coordinates, radius, color,thick)
+#Sintaxis de lineas cv.line(image, start_point, end_point, color, thickness)
+
+
+#Graficando el resultado
+fig, ax = plt.subplots()
+ax.imshow(chica, extent=(0,chica.shape[1],0,chica.shape[0]) )
+ax.set_xlabel("X")
+ax.set_ylabel("Y")  
+
+plt.show()
+
+
+
+#mostrar la imagen
+cv.imshow('puntos Hernandez Corvo', chica)
+cv.waitKey(0)
